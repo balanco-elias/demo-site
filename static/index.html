@@ -495,6 +495,113 @@
     .ttt-dot.x { background: rgba(215,181,109,.9); }
     .ttt-dot.o { background: rgba(139,92,246,.9); }
 
+    /* ── Mindmap ── */
+    .mindmap {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+
+    .mm-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 2px 2px 12px;
+    }
+
+    .mm-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .mm-title h2 {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .mm-title p {
+      font-size: 12px;
+      color: rgba(255,255,255,.58);
+    }
+
+    .mm-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: 0 0 auto;
+    }
+
+    .mm-btn {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.82);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 750;
+      padding: 9px 12px;
+      border-radius: 12px;
+      transition: transform .12s ease, border-color .15s ease, background .15s ease;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+      white-space: nowrap;
+    }
+
+    .mm-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(215,181,109,.35);
+      background: rgba(215,181,109,.08);
+    }
+
+    .mm-btn:active { transform: translateY(0); }
+
+    .mm-wrap {
+      background: rgba(8,10,18,.25);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .mm-svg {
+      width: 100%;
+      height: 320px;
+      display: block;
+    }
+
+    .mm-node {
+      fill: rgba(255,255,255,.05);
+      stroke: rgba(255,255,255,.14);
+      stroke-width: 1;
+    }
+
+    .mm-node.root {
+      stroke: rgba(215,181,109,.55);
+      fill: rgba(215,181,109,.08);
+    }
+
+    .mm-link {
+      stroke: rgba(255,255,255,.22);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .mm-text {
+      fill: rgba(255,255,255,.90);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .mm-hint {
+      margin: 10px 4px 0;
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      display: none;
+    }
+
     /* Responsive: keep brand link visible but not overlapping */
     @media (max-width: 540px) {
       header .inner { padding-top: 40px; }
@@ -505,6 +612,7 @@
       .brand-link:hover { transform: translateY(-1px); }
 
       .ttt-cell { height: 72px; font-size: 30px; }
+      .mm-svg { height: 360px; }
     }
   </style>
 </head>
@@ -567,6 +675,26 @@
           <span class="ttt-pill"><span class="ttt-dot"></span> Draws: <span id="ttt-draws">0</span></span>
         </div>
       </div>
+
+      <div class="mindmap" aria-label="Todo mindmap">
+        <div class="mm-header">
+          <div class="mm-title">
+            <h2>Mindmap</h2>
+            <p>First todo is the parent node. Every next todo attaches as a child.</p>
+          </div>
+          <div class="mm-actions">
+            <button class="mm-btn" onclick="mmFit()" title="Fit mindmap to available width">Fit</button>
+          </div>
+        </div>
+
+        <div class="mm-wrap">
+          <svg class="mm-svg" id="mm-svg" viewBox="0 0 640 320" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mindmap of todos">
+            <g id="mm-links"></g>
+            <g id="mm-nodes"></g>
+          </svg>
+          <div class="mm-hint" id="mm-hint">Add a todo to start the mindmap.</div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -579,6 +707,7 @@
       const res = await fetch(`${API}/todos`);
       const todos = await res.json();
       render(todos);
+      renderMindmap(todos);
     } catch (e) {
       showError('Could not load todos: ' + e.message);
     }
@@ -811,6 +940,152 @@
   }
 
   tttInit();
+
+  // ─────────────────────────────────────────────────────────────
+  // Mindmap (derived from todos)
+  // ─────────────────────────────────────────────────────────────
+
+  function mmFit() {
+    const svg = document.getElementById('mm-svg');
+    // Keep a fixed viewBox for simple rendering; this triggers a re-render sized to current width.
+    // (SVG scales automatically, but we also rebuild to update truncation / positions if needed.)
+    // If this is called before any render, it will be a no-op.
+    try {
+      if (window.__lastTodosForMindmap) renderMindmap(window.__lastTodosForMindmap);
+    } catch (_) {}
+  }
+
+  function renderMindmap(todos) {
+    window.__lastTodosForMindmap = todos;
+
+    const svg = document.getElementById('mm-svg');
+    const linksG = document.getElementById('mm-links');
+    const nodesG = document.getElementById('mm-nodes');
+    const hint = document.getElementById('mm-hint');
+
+    // Clear
+    linksG.innerHTML = '';
+    nodesG.innerHTML = '';
+
+    if (!todos || !todos.length) {
+      hint.style.display = 'block';
+      return;
+    }
+    hint.style.display = 'none';
+
+    // Ensure stable ordering: by id ascending.
+    const ordered = [...todos].sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+
+    // Layout: parent in center-left, children vertically to the right.
+    // Use actual rendered size for better spacing.
+    const rect = svg.getBoundingClientRect();
+    const W = Math.max(640, Math.floor(rect.width || 640));
+    const H = Math.max(320, Math.floor(rect.height || 320));
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+    const root = ordered[0];
+    const children = ordered.slice(1);
+
+    const rootX = Math.round(W * 0.24);
+    const rootY = Math.round(H * 0.50);
+
+    const childX = Math.round(W * 0.70);
+    const topPad = 34;
+    const bottomPad = 34;
+    const available = Math.max(1, H - topPad - bottomPad);
+
+    function nodeLabel(todo) {
+      const id = todo.id != null ? `#${todo.id} ` : '';
+      return `${id}${todo.title || ''}`.trim();
+    }
+
+    function truncateForNode(text, maxChars) {
+      if (text.length <= maxChars) return text;
+      return text.slice(0, Math.max(0, maxChars - 1)).trimEnd() + '…';
+    }
+
+    function makeNode(x, y, text, isRoot) {
+      // Basic sizing by length; capped.
+      const maxTextChars = Math.max(10, Math.min(36, Math.floor((W / 16))));
+      const shown = truncateForNode(text, maxTextChars);
+
+      const charW = 7.0;
+      const paddingX = 14;
+      const minW = 110;
+      const maxW = Math.min(360, Math.floor(W * 0.52));
+      const boxW = Math.max(minW, Math.min(maxW, Math.floor(shown.length * charW + paddingX * 2)));
+      const boxH = 34;
+      const rx = 12;
+
+      const x0 = Math.round(x - boxW / 2);
+      const y0 = Math.round(y - boxH / 2);
+
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+      const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      r.setAttribute('x', String(x0));
+      r.setAttribute('y', String(y0));
+      r.setAttribute('width', String(boxW));
+      r.setAttribute('height', String(boxH));
+      r.setAttribute('rx', String(rx));
+      r.setAttribute('ry', String(rx));
+      r.setAttribute('class', isRoot ? 'mm-node root' : 'mm-node');
+
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', String(x));
+      t.setAttribute('y', String(y + 4));
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('class', 'mm-text');
+      t.textContent = shown;
+
+      g.appendChild(r);
+      g.appendChild(t);
+      nodesG.appendChild(g);
+
+      // Connection anchor points
+      return {
+        left: { x: x0, y },
+        right: { x: x0 + boxW, y }
+      };
+    }
+
+    // Root node
+    const rootAnchors = makeNode(rootX, rootY, nodeLabel(root), true);
+
+    // Children nodes + links
+    if (children.length) {
+      const step = children.length === 1 ? 0 : (available / (children.length - 1));
+
+      children.forEach((c, i) => {
+        const y = children.length === 1
+          ? rootY
+          : Math.round(topPad + i * step);
+
+        const childAnchors = makeNode(childX, y, nodeLabel(c), false);
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const sx = rootAnchors.right.x;
+        const sy = rootAnchors.right.y;
+        const ex = childAnchors.left.x;
+        const ey = childAnchors.left.y;
+        const dx = Math.max(40, Math.round((ex - sx) * 0.45));
+        const c1x = sx + dx;
+        const c1y = sy;
+        const c2x = ex - dx;
+        const c2y = ey;
+        path.setAttribute('d', `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`);
+        path.setAttribute('class', 'mm-link');
+        linksG.appendChild(path);
+      });
+    }
+  }
+
+  // Re-render mindmap if viewport changes size.
+  window.addEventListener('resize', () => {
+    try {
+      if (window.__lastTodosForMindmap) renderMindmap(window.__lastTodosForMindmap);
+    } catch (_) {}
+  });
 </script>
 
 <!--
