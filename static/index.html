@@ -348,6 +348,139 @@
       }
       .brand-link:hover { transform: translateY(-1px); }
     }
+
+    /* ── Mindmap ── */
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,.08);
+      margin: 18px 0;
+    }
+
+    .mindmap {
+      margin-top: 18px;
+    }
+
+    .mindmap h2 {
+      font-size: 16px;
+      font-weight: 750;
+      letter-spacing: -.2px;
+      margin-bottom: 10px;
+    }
+
+    .mindmap .hint {
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      margin-bottom: 12px;
+    }
+
+    .mindmap-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .mindmap-controls input {
+      flex: 1;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+      outline: none;
+      color: rgba(255,255,255,.92);
+      background: rgba(8,10,18,.40);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .mindmap-controls input:focus {
+      border-color: rgba(139,92,246,.55);
+      box-shadow: 0 0 0 4px rgba(139,92,246,.12), inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    .mindmap-controls button {
+      background: linear-gradient(135deg, rgba(139,92,246,.95), rgba(99,102,241,.95));
+      color: rgba(255,255,255,.92);
+      border: 1px solid rgba(139,92,246,.55);
+      border-radius: 12px;
+      padding: 11px 18px;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform .12s ease, filter .15s ease;
+      white-space: nowrap;
+      box-shadow: 0 12px 26px rgba(0,0,0,.30);
+    }
+
+    .mindmap-controls button:hover { filter: brightness(1.03); transform: translateY(-1px); }
+    .mindmap-controls button:active { transform: translateY(0); }
+
+    .mindmap-canvas {
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(8,10,18,.22);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .mindmap-tree {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .mindmap-tree ul {
+      list-style: none;
+      margin-left: 14px;
+      padding-left: 14px;
+      border-left: 1px solid rgba(255,255,255,.10);
+    }
+
+    .mm-node {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0;
+    }
+
+    .mm-btn {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: rgba(255,255,255,.9);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform .12s ease, border-color .15s ease, background .15s ease;
+      text-align: left;
+    }
+
+    .mm-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(139,92,246,.35);
+      background: rgba(139,92,246,.12);
+    }
+
+    .mm-meta {
+      font-size: 11px;
+      color: rgba(255,255,255,.45);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.04);
+      user-select: none;
+    }
+
+    .mm-loading {
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      margin-top: 10px;
+      display: none;
+    }
+
+    .mm-note {
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -377,6 +510,27 @@
       <div class="error-banner" id="error-banner"></div>
       <div class="stats" id="stats"></div>
       <div class="todo-list" id="todo-list"></div>
+
+      <div class="divider"></div>
+
+      <div class="mindmap" aria-label="AI mindmap">
+        <h2>AI Mindmap</h2>
+        <div class="hint">Type an idea, generate nodes, then click any node to expand it further.</div>
+
+        <div class="mindmap-controls">
+          <input id="mm-prompt" type="text" placeholder="e.g. Launching a newsletter for a local business" />
+          <button onclick="createMindmap()">Generate</button>
+        </div>
+
+        <div class="mindmap-canvas">
+          <div id="mm-loading" class="mm-loading">Generating…</div>
+          <div id="mm-error" class="error-banner" style="display:none;"></div>
+          <div id="mm-root" class="mm-note">No mindmap yet.</div>
+          <ul id="mm-tree" class="mindmap-tree"></ul>
+          <div class="mm-note">Tip: set <code>OPENAI_API_KEY</code> on the server to enable real AI. Without it, a local fallback is used.</div>
+        </div>
+      </div>
+
     </div>
   </section>
 </main>
@@ -468,6 +622,166 @@
 
   document.getElementById('new-todo').addEventListener('keydown', e => {
     if (e.key === 'Enter') addTodo();
+  });
+
+  // -----------------
+  // Mindmap front-end
+  // -----------------
+
+  let mmMapId = null;
+  const mmNodes = new Map(); // id -> node
+
+  function mmShowLoading(on) {
+    const el = document.getElementById('mm-loading');
+    el.style.display = on ? 'block' : 'none';
+  }
+
+  function mmShowError(msg) {
+    const el = document.getElementById('mm-error');
+    if (!msg) {
+      el.style.display = 'none';
+      el.textContent = '';
+      return;
+    }
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 6000);
+  }
+
+  function mmClear() {
+    mmNodes.clear();
+    document.getElementById('mm-tree').innerHTML = '';
+    document.getElementById('mm-root').textContent = 'No mindmap yet.';
+  }
+
+  function mmAddNodes(nodes) {
+    for (const n of nodes) mmNodes.set(n.id, n);
+  }
+
+  function mmChildrenOf(parentId) {
+    const out = [];
+    for (const n of mmNodes.values()) {
+      if ((n.parent_id || null) === (parentId || null)) out.push(n);
+    }
+    out.sort((a, b) => a.id.localeCompare(b.id));
+    return out;
+  }
+
+  function mmRender() {
+    const tree = document.getElementById('mm-tree');
+    tree.innerHTML = '';
+
+    const roots = mmChildrenOf(null);
+    if (!roots.length) {
+      document.getElementById('mm-root').textContent = 'No mindmap yet.';
+      return;
+    }
+
+    const root = roots[0];
+    document.getElementById('mm-root').textContent = `Root: ${root.label}`;
+
+    const li = mmRenderNode(root);
+    tree.appendChild(li);
+  }
+
+  function mmRenderNode(node) {
+    const li = document.createElement('li');
+
+    const row = document.createElement('div');
+    row.className = 'mm-node';
+
+    const btn = document.createElement('button');
+    btn.className = 'mm-btn';
+    btn.textContent = node.label;
+    btn.title = 'Click to expand';
+    btn.addEventListener('click', () => expandNode(node.id));
+
+    const meta = document.createElement('span');
+    meta.className = 'mm-meta';
+    meta.textContent = `depth ${node.depth}`;
+
+    row.appendChild(btn);
+    row.appendChild(meta);
+    li.appendChild(row);
+
+    const kids = mmChildrenOf(node.id);
+    if (kids.length) {
+      const ul = document.createElement('ul');
+      for (const k of kids) ul.appendChild(mmRenderNode(k));
+      li.appendChild(ul);
+    }
+
+    return li;
+  }
+
+  async function createMindmap() {
+    const input = document.getElementById('mm-prompt');
+    const prompt = input.value.trim();
+    if (!prompt) return;
+
+    mmShowError('');
+    mmShowLoading(true);
+
+    try {
+      const res = await fetch(`${API}/mindmap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      mmMapId = data.map_id;
+      mmClear();
+      mmAddNodes(data.nodes);
+      mmRender();
+    } catch (e) {
+      mmShowError('Could not create mindmap: ' + e.message);
+    } finally {
+      mmShowLoading(false);
+    }
+  }
+
+  async function expandNode(nodeId) {
+    if (!mmMapId) return;
+
+    // If already has children, just re-render (toggle UX could be added later)
+    if (mmChildrenOf(nodeId).length) {
+      mmRender();
+      return;
+    }
+
+    mmShowError('');
+    mmShowLoading(true);
+
+    try {
+      const res = await fetch(`${API}/mindmap/${mmMapId}/expand`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ node_id: nodeId }),
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || `HTTP ${res.status}`);
+      }
+
+      const nodes = await res.json();
+      mmAddNodes(nodes);
+      mmRender();
+    } catch (e) {
+      mmShowError('Could not expand node: ' + e.message);
+    } finally {
+      mmShowLoading(false);
+    }
+  }
+
+  document.getElementById('mm-prompt').addEventListener('keydown', e => {
+    if (e.key === 'Enter') createMindmap();
   });
 
   loadTodos();
