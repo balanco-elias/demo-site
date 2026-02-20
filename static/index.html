@@ -606,12 +606,73 @@
       white-space: nowrap;
     }
 
+    /* Improved connectors (clearer parent->children relationship) */
     .mm-connector {
       height: 18px;
       width: 2px;
-      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.02));
+      background: linear-gradient(180deg, rgba(215,181,109,.45), rgba(255,255,255,.04));
       border-radius: 2px;
+      position: relative;
+      margin: 2px 0;
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
     }
+
+    /* small joint dot to anchor the connection */
+    .mm-connector::before {
+      content: "";
+      position: absolute;
+      top: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(215,181,109,.85);
+      box-shadow:
+        0 0 0 3px rgba(215,181,109,.12),
+        0 12px 26px rgba(0,0,0,.25);
+    }
+
+    /* arrow head pointing down */
+    .mm-connector::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 7px solid rgba(215,181,109,.62);
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,.25));
+    }
+
+    /* horizontal "fork" line above children */
+    .mm-children-connector {
+      width: min(560px, 92%);
+      height: 2px;
+      margin: -4px 0 10px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(215,181,109,.38), rgba(255,255,255,0));
+      border-radius: 999px;
+      position: relative;
+    }
+
+    /* subtle vertical drops from the fork towards children */
+    .mm-children-connector::before,
+    .mm-children-connector::after {
+      content: "";
+      position: absolute;
+      top: -7px;
+      width: 2px;
+      height: 14px;
+      background: linear-gradient(180deg, rgba(215,181,109,.10), rgba(215,181,109,.26));
+      border-radius: 2px;
+      opacity: .85;
+    }
+
+    .mm-children-connector::before { left: 18%; }
+    .mm-children-connector::after { right: 18%; }
 
     /* Responsive: keep brand link visible but not overlapping */
     @media (max-width: 540px) {
@@ -781,6 +842,7 @@
         </div>
       </div>
       <div class="mm-connector" aria-hidden="true"></div>
+      <div class="mm-children-connector" aria-hidden="true"></div>
       <div class="mm-row">
         ${children.length ? childNodesHtml : '<div class="mm-empty">Add more todos to create child nodes.</div>'}
       </div>
