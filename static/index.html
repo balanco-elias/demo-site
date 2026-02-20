@@ -495,6 +495,185 @@
     .ttt-dot.x { background: rgba(215,181,109,.9); }
     .ttt-dot.o { background: rgba(139,92,246,.9); }
 
+    /* ── Mindmap ── */
+    .mindmap {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+
+    .mm-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 2px 2px 12px;
+    }
+
+    .mm-header h2 {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .mm-header p {
+      font-size: 12px;
+      color: rgba(255,255,255,.58);
+    }
+
+    .mm-surface {
+      background: rgba(8,10,18,.25);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 14px 12px;
+      box-shadow: var(--shadow-soft);
+      overflow-x: auto;
+    }
+
+    .mm-empty {
+      text-align: center;
+      padding: 24px 0;
+      color: rgba(255,255,255,.58);
+      border: 1px dashed rgba(255,255,255,.14);
+      border-radius: 14px;
+      background: rgba(8,10,18,.20);
+    }
+
+    .mm-tree {
+      --mm-gap-y: 18px;
+      --mm-gap-x: 14px;
+      display: grid;
+      gap: var(--mm-gap-y);
+      min-width: 420px;
+      justify-items: center;
+    }
+
+    .mm-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--mm-gap-x);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .mm-node {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.88);
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 10px 22px rgba(0,0,0,.20);
+      max-width: 240px;
+    }
+
+    .mm-node .mm-bullet {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.22);
+      flex: 0 0 auto;
+    }
+
+    .mm-node.parent {
+      border-color: rgba(215,181,109,.35);
+      background: linear-gradient(135deg, rgba(215,181,109,.14), rgba(184,138,59,.06));
+    }
+
+    .mm-node.parent .mm-bullet {
+      background: rgba(215,181,109,.85);
+      box-shadow: 0 0 0 3px rgba(215,181,109,.12);
+    }
+
+    .mm-node.child .mm-bullet {
+      background: rgba(139,92,246,.75);
+    }
+
+    .mm-node.done {
+      opacity: .62;
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      text-decoration-color: rgba(255,255,255,.22);
+    }
+
+    .mm-node .mm-text {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Improved connectors (clearer parent->children relationship) */
+    .mm-connector {
+      height: 18px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(215,181,109,.45), rgba(255,255,255,.04));
+      border-radius: 2px;
+      position: relative;
+      margin: 2px 0;
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
+    }
+
+    /* small joint dot to anchor the connection */
+    .mm-connector::before {
+      content: "";
+      position: absolute;
+      top: -7px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(215,181,109,.85);
+      box-shadow:
+        0 0 0 3px rgba(215,181,109,.12),
+        0 12px 26px rgba(0,0,0,.25);
+    }
+
+    /* arrow head pointing down */
+    .mm-connector::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 7px solid rgba(215,181,109,.62);
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,.25));
+    }
+
+    /* horizontal "fork" line above children */
+    .mm-children-connector {
+      width: min(560px, 92%);
+      height: 2px;
+      margin: -4px 0 10px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(215,181,109,.38), rgba(255,255,255,0));
+      border-radius: 999px;
+      position: relative;
+    }
+
+    /* subtle vertical drops from the fork towards children */
+    .mm-children-connector::before,
+    .mm-children-connector::after {
+      content: "";
+      position: absolute;
+      top: -7px;
+      width: 2px;
+      height: 14px;
+      background: linear-gradient(180deg, rgba(215,181,109,.10), rgba(215,181,109,.26));
+      border-radius: 2px;
+      opacity: .85;
+    }
+
+    .mm-children-connector::before { left: 18%; }
+    .mm-children-connector::after { right: 18%; }
+
     /* Responsive: keep brand link visible but not overlapping */
     @media (max-width: 540px) {
       header .inner { padding-top: 40px; }
@@ -567,6 +746,20 @@
           <span class="ttt-pill"><span class="ttt-dot"></span> Draws: <span id="ttt-draws">0</span></span>
         </div>
       </div>
+
+      <div class="mindmap" aria-label="Mind map">
+        <div class="mm-header">
+          <div>
+            <h2>Mind map</h2>
+            <p>Uses your todos: first item is the parent node, all others are children.</p>
+          </div>
+        </div>
+        <div class="mm-surface" id="mm-surface">
+          <div class="mm-empty" id="mm-empty">Add at least 1 todo to generate a mind map.</div>
+          <div class="mm-tree" id="mm-tree" style="display:none;"></div>
+        </div>
+      </div>
+
     </div>
   </section>
 </main>
@@ -617,6 +810,48 @@
     } catch (e) { showError(e.message); }
   }
 
+  function renderMindmap(todos) {
+    const empty = document.getElementById('mm-empty');
+    const tree = document.getElementById('mm-tree');
+
+    if (!Array.isArray(todos) || todos.length === 0) {
+      empty.style.display = 'block';
+      tree.style.display = 'none';
+      tree.innerHTML = '';
+      return;
+    }
+
+    const parent = todos[0];
+    const children = todos.slice(1);
+
+    const parentClass = `mm-node parent ${parent.done ? 'done' : ''}`;
+    const childNodesHtml = children.map(t => {
+      const cls = `mm-node child ${t.done ? 'done' : ''}`;
+      return `
+        <div class="${cls}" title="#${t.id}">
+          <span class="mm-bullet" aria-hidden="true"></span>
+          <span class="mm-text">${escHtml(t.title)}</span>
+        </div>`;
+    }).join('');
+
+    tree.innerHTML = `
+      <div class="mm-row">
+        <div class="${parentClass}" title="#${parent.id}">
+          <span class="mm-bullet" aria-hidden="true"></span>
+          <span class="mm-text">${escHtml(parent.title)}</span>
+        </div>
+      </div>
+      <div class="mm-connector" aria-hidden="true"></div>
+      <div class="mm-children-connector" aria-hidden="true"></div>
+      <div class="mm-row">
+        ${children.length ? childNodesHtml : '<div class="mm-empty">Add more todos to create child nodes.</div>'}
+      </div>
+    `;
+
+    empty.style.display = 'none';
+    tree.style.display = 'grid';
+  }
+
   function render(todos) {
     const list = document.getElementById('todo-list');
     const stats = document.getElementById('stats');
@@ -631,6 +866,7 @@
           <div class="icon">✅</div>
           <p>Nothing here yet. Add a todo above!</p>
         </div>`;
+      renderMindmap(todos);
       return;
     }
 
@@ -643,6 +879,8 @@
         <button class="todo-delete" onclick="deleteTodo(${t.id})" title="Delete">×</button>
       </div>`
     ).join('');
+
+    renderMindmap(todos);
   }
 
   function showError(msg) {
