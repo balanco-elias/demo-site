@@ -339,6 +339,162 @@
       box-shadow: 0 12px 30px rgba(0,0,0,.25);
     }
 
+    /* ── Tic Tac Toe ── */
+    .tictactoe {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+
+    .ttt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 2px 2px 12px;
+    }
+
+    .ttt-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .ttt-title h2 {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    .ttt-title p {
+      font-size: 12px;
+      color: rgba(255,255,255,.58);
+    }
+
+    .ttt-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex: 0 0 auto;
+    }
+
+    .ttt-btn {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.82);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 750;
+      padding: 9px 12px;
+      border-radius: 12px;
+      transition: transform .12s ease, border-color .15s ease, background .15s ease;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+    }
+
+    .ttt-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(215,181,109,.35);
+      background: rgba(215,181,109,.08);
+    }
+
+    .ttt-btn:active { transform: translateY(0); }
+
+    .ttt-board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      background: rgba(8,10,18,.25);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .ttt-cell {
+      height: 86px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(400px 120px at 30% 20%, rgba(215,181,109,.10), transparent 60%),
+        radial-gradient(450px 160px at 80% 20%, rgba(139,92,246,.10), transparent 60%),
+        rgba(255,255,255,.04);
+      color: rgba(255,255,255,.92);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      transition: transform .12s ease, border-color .15s ease, background .15s ease;
+      user-select: none;
+    }
+
+    .ttt-cell:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .ttt-cell:active { transform: translateY(0); }
+
+    .ttt-cell[disabled] {
+      cursor: not-allowed;
+      opacity: .9;
+    }
+
+    .ttt-cell.x {
+      color: rgba(215,181,109,.95);
+      text-shadow: 0 10px 30px rgba(215,181,109,.16);
+    }
+
+    .ttt-cell.o {
+      color: rgba(139,92,246,.95);
+      text-shadow: 0 10px 30px rgba(139,92,246,.16);
+    }
+
+    .ttt-cell.win {
+      border-color: rgba(215,181,109,.55);
+      background: rgba(215,181,109,.10);
+      box-shadow: 0 16px 40px rgba(215,181,109,.10);
+      animation: pop .18s ease;
+    }
+
+    @keyframes pop {
+      from { transform: scale(.98); }
+      to { transform: scale(1); }
+    }
+
+    .ttt-status {
+      margin: 10px 4px 0;
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .ttt-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      box-shadow: 0 10px 22px rgba(0,0,0,.18);
+    }
+
+    .ttt-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.22);
+    }
+
+    .ttt-dot.x { background: rgba(215,181,109,.9); }
+    .ttt-dot.o { background: rgba(139,92,246,.9); }
+
     /* Responsive: keep brand link visible but not overlapping */
     @media (max-width: 540px) {
       header .inner { padding-top: 40px; }
@@ -347,6 +503,8 @@
         transform: none;
       }
       .brand-link:hover { transform: translateY(-1px); }
+
+      .ttt-cell { height: 72px; font-size: 30px; }
     }
   </style>
 </head>
@@ -377,6 +535,38 @@
       <div class="error-banner" id="error-banner"></div>
       <div class="stats" id="stats"></div>
       <div class="todo-list" id="todo-list"></div>
+
+      <div class="tictactoe" aria-label="Tic tac toe">
+        <div class="ttt-header">
+          <div class="ttt-title">
+            <h2>Tic Tac Toe</h2>
+            <p>Play locally — X starts. First to 3 in a row wins.</p>
+          </div>
+          <div class="ttt-actions">
+            <button class="ttt-btn" onclick="tttNewGame()" title="Start a new game">New game</button>
+            <button class="ttt-btn" onclick="tttResetScore()" title="Reset scoreboard">Reset score</button>
+          </div>
+        </div>
+
+        <div class="ttt-board" id="ttt-board" role="grid" aria-label="Tic tac toe board">
+          <button class="ttt-cell" data-idx="0" aria-label="Cell 1"></button>
+          <button class="ttt-cell" data-idx="1" aria-label="Cell 2"></button>
+          <button class="ttt-cell" data-idx="2" aria-label="Cell 3"></button>
+          <button class="ttt-cell" data-idx="3" aria-label="Cell 4"></button>
+          <button class="ttt-cell" data-idx="4" aria-label="Cell 5"></button>
+          <button class="ttt-cell" data-idx="5" aria-label="Cell 6"></button>
+          <button class="ttt-cell" data-idx="6" aria-label="Cell 7"></button>
+          <button class="ttt-cell" data-idx="7" aria-label="Cell 8"></button>
+          <button class="ttt-cell" data-idx="8" aria-label="Cell 9"></button>
+        </div>
+
+        <div class="ttt-status" aria-live="polite">
+          <span class="ttt-pill" id="ttt-turn-pill"><span class="ttt-dot" id="ttt-turn-dot"></span><span id="ttt-status">Your move</span></span>
+          <span class="ttt-pill"><span class="ttt-dot x"></span> X wins: <span id="ttt-x-wins">0</span></span>
+          <span class="ttt-pill"><span class="ttt-dot o"></span> O wins: <span id="ttt-o-wins">0</span></span>
+          <span class="ttt-pill"><span class="ttt-dot"></span> Draws: <span id="ttt-draws">0</span></span>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -471,6 +661,156 @@
   });
 
   loadTodos();
+
+  // ─────────────────────────────────────────────────────────────
+  // Tic Tac Toe
+  // ─────────────────────────────────────────────────────────────
+
+  const TTT_STORAGE_KEY = 'demoSite_ttt_score_v1';
+  const ttt = {
+    board: Array(9).fill(null),
+    turn: 'X',
+    over: false,
+    winLine: null,
+    score: { X: 0, O: 0, D: 0 }
+  };
+
+  const TTT_LINES = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  function tttLoadScore() {
+    try {
+      const raw = localStorage.getItem(TTT_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        ttt.score.X = Number(parsed.X || 0);
+        ttt.score.O = Number(parsed.O || 0);
+        ttt.score.D = Number(parsed.D || 0);
+      }
+    } catch (_) {}
+  }
+
+  function tttSaveScore() {
+    try {
+      localStorage.setItem(TTT_STORAGE_KEY, JSON.stringify(ttt.score));
+    } catch (_) {}
+  }
+
+  function tttWinner(board) {
+    for (const line of TTT_LINES) {
+      const [a,b,c] = line;
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        return { player: board[a], line };
+      }
+    }
+    if (board.every(v => v)) return { player: 'D', line: null };
+    return null;
+  }
+
+  function tttSetStatus(text, turn) {
+    const status = document.getElementById('ttt-status');
+    const dot = document.getElementById('ttt-turn-dot');
+    status.textContent = text;
+
+    dot.classList.remove('x', 'o');
+    if (turn === 'X') dot.classList.add('x');
+    if (turn === 'O') dot.classList.add('o');
+  }
+
+  function tttRender() {
+    const cells = document.querySelectorAll('.ttt-cell');
+    cells.forEach((btn, i) => {
+      const v = ttt.board[i];
+      btn.textContent = v ? v : '';
+      btn.classList.toggle('x', v === 'X');
+      btn.classList.toggle('o', v === 'O');
+      btn.classList.toggle('win', ttt.winLine ? ttt.winLine.includes(i) : false);
+      btn.disabled = ttt.over || !!v;
+    });
+
+    document.getElementById('ttt-x-wins').textContent = String(ttt.score.X);
+    document.getElementById('ttt-o-wins').textContent = String(ttt.score.O);
+    document.getElementById('ttt-draws').textContent = String(ttt.score.D);
+
+    if (!ttt.over) {
+      tttSetStatus(`Turn: ${ttt.turn}`, ttt.turn);
+    }
+  }
+
+  function tttNewGame() {
+    ttt.board = Array(9).fill(null);
+    ttt.turn = 'X';
+    ttt.over = false;
+    ttt.winLine = null;
+    tttSetStatus('Turn: X', 'X');
+    tttRender();
+  }
+
+  function tttResetScore() {
+    ttt.score = { X: 0, O: 0, D: 0 };
+    tttSaveScore();
+    tttNewGame();
+  }
+
+  function tttPlay(idx) {
+    if (ttt.over) return;
+    if (ttt.board[idx]) return;
+
+    ttt.board[idx] = ttt.turn;
+
+    const res = tttWinner(ttt.board);
+    if (res) {
+      ttt.over = true;
+      ttt.winLine = res.line;
+
+      if (res.player === 'X') {
+        ttt.score.X += 1;
+        tttSetStatus('X wins! Press “New game” to play again.', 'X');
+      } else if (res.player === 'O') {
+        ttt.score.O += 1;
+        tttSetStatus('O wins! Press “New game” to play again.', 'O');
+      } else {
+        ttt.score.D += 1;
+        tttSetStatus('Draw. Press “New game” to try again.', null);
+      }
+
+      tttSaveScore();
+      tttRender();
+      return;
+    }
+
+    ttt.turn = (ttt.turn === 'X') ? 'O' : 'X';
+    tttRender();
+  }
+
+  function tttInit() {
+    tttLoadScore();
+
+    const board = document.getElementById('ttt-board');
+    board.addEventListener('click', (e) => {
+      const btn = e.target.closest('.ttt-cell');
+      if (!btn) return;
+      const idx = Number(btn.getAttribute('data-idx'));
+      if (!Number.isFinite(idx)) return;
+      tttPlay(idx);
+    });
+
+    // Keyboard support: 1-9 map to cells.
+    document.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+      const map = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8 };
+      if (map[e.key] !== undefined) tttPlay(map[e.key]);
+      if (e.key.toLowerCase() === 'r') tttNewGame();
+    });
+
+    tttNewGame();
+  }
+
+  tttInit();
 </script>
 
 <!--
