@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Todo List — Demo Site</title>
+
+  <!-- Reduce noisy 404s from browser auto-requests -->
+  <link rel="icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png" />
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -242,7 +248,8 @@
 <script
   src="http://localhost:8000/static/dev-panel.js"
   data-agent="http://localhost:8000"
-  data-repo="balanco-elias/demo-site">
+  data-repo="balanco-elias/demo-site"
+  data-textarea-rows="14">
 </script>
 
 </body>

@@ -31,6 +31,24 @@ def index() -> FileResponse:
     return FileResponse("static/index.html")
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> FileResponse:
+    # Avoid noisy 404s in terminal from browsers automatically requesting this.
+    return FileResponse("static/favicon.ico")
+
+
+@app.get("/apple-touch-icon.png", include_in_schema=False)
+def apple_touch_icon() -> FileResponse:
+    # Avoid noisy 404s on iOS/Safari.
+    return FileResponse("static/apple-touch-icon.png")
+
+
+@app.get("/apple-touch-icon-precomposed.png", include_in_schema=False)
+def apple_touch_icon_precomposed() -> FileResponse:
+    # Avoid noisy 404s on iOS/Safari.
+    return FileResponse("static/apple-touch-icon-precomposed.png")
+
+
 @app.get("/todos", response_model=list[Todo])
 def list_todos() -> list[Todo]:
     return [Todo(**t) for t in _todos.values()]  # type: ignore[arg-type]
